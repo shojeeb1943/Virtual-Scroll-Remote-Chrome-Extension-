@@ -14,9 +14,11 @@ const DEFAULT_SETTINGS = {
 };
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get(['settings'], (result) => {
+  chrome.storage.local.get(null, (result) => {
     if (!result.settings) {
-      chrome.storage.local.set({ settings: DEFAULT_SETTINGS });
+      chrome.storage.local.set({ settings: DEFAULT_SETTINGS, isEnabled: true });
+    } else if (result.isEnabled === undefined) {
+      chrome.storage.local.set({ isEnabled: true });
     }
   });
 });
@@ -24,7 +26,9 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.commands.onCommand.addListener((command) => {
   if (command === 'toggle-scroll') {
     chrome.storage.local.get(['isEnabled'], (result) => {
-      const newState = !result.isEnabled;
+      const currentState = result.isEnabled !== false;
+      const newState = !currentState;
+      
       chrome.storage.local.set({ isEnabled: newState }, () => {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (tabs[0]) {
@@ -55,8 +59,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'CHECK_EXCLUSION') {
     const url = message.url;
-    chrome.storage.local.get(['settings', 'isEnabled'], (result) => {
+    chrome.storage.local.get(null, (result) => {
       const settings = result.settings || DEFAULT_SETTINGS;
+      const isEnabled = result.isEnabled !== false;
       
       let currentHostname = '';
       try {
@@ -67,6 +72,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       
       const isExcluded = (settings.excludedDomains || []).some(domain => {
         const normalizedDomain = domain.toLowerCase().trim();
+        return currentHostname === normalizedDomain || 
+               currentHostname.endsWith('.' + normalizedDomain);
+      });
         return currentHostname === normalizedDomain || 
                currentHostname.endsWith('.' + normalizedDomain);
       });
