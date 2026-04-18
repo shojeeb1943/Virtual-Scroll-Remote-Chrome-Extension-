@@ -14,6 +14,7 @@
       this.rightButton = null;
       this.scrollInterval = null;
       this.isContinuousScroll = false;
+      this.isCleanedUp = false;
       this.clickState = {
         direction: null,
         mousedownTime: 0,
@@ -181,17 +182,22 @@
     }
 
     cleanup() {
+      this.isCleanedUp = true;
       if (this.scrollInterval) {
         clearInterval(this.scrollInterval);
+        this.scrollInterval = null;
       }
       if (this.clickState.holdTimeout) {
         clearTimeout(this.clickState.holdTimeout);
+        this.clickState.holdTimeout = null;
       }
       if (this.debounceTimer) {
         clearTimeout(this.debounceTimer);
+        this.debounceTimer = null;
       }
       if (this.container && this.container.parentNode) {
         this.container.parentNode.removeChild(this.container);
+        this.container = null;
       }
     }
 
@@ -512,6 +518,7 @@
       this.clickState.isHolding = true;
 
       this.clickState.holdTimeout = setTimeout(() => {
+        if (this.isCleanedUp) return;
         if (this.clickState.isHolding && this.clickState.direction === direction) {
           this.startContinuousScroll(direction, button);
         }
@@ -542,6 +549,7 @@
           this.clickState.lastClickTime = now;
         } else {
           this.debounceTimer = setTimeout(() => {
+            if (this.isCleanedUp) return;
             this.executeSingleClick(direction);
             this.clickState.lastClickTime = now;
             this.debounceTimer = null;
@@ -572,6 +580,10 @@
       let currentSpeed = this.settings.accelerationBase;
 
       this.scrollInterval = setInterval(() => {
+        if (this.isCleanedUp) {
+          this.stopContinuousScroll();
+          return;
+        }
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / this.settings.accelerationDuration, 1);
         currentSpeed = this.settings.accelerationBase + 
