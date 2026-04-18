@@ -1,8 +1,6 @@
 (function() {
   'use strict';
 
-  const CLICK_HOLD_THRESHOLD = 300;
-  const DOUBLE_CLICK_THRESHOLD = 400;
   const DEBOUNCE_DELAY = 100;
 
   class VirtualScrollRemote {
@@ -192,6 +190,9 @@
             accelerationBase: 1,
             accelerationMax: 5,
             accelerationDuration: 3000,
+            holdThreshold: 300,
+            doubleClickWindow: 400,
+            opacity: 0.8,
             excludedDomains: []
           };
           resolve();
@@ -325,8 +326,11 @@
     createButtons() {
       this.upButton = document.createElement('button');
       this.upButton.className = 'scroll-button up';
+      this.upButton.setAttribute('aria-label', 'Scroll up');
+      this.upButton.setAttribute('role', 'button');
+      this.upButton.setAttribute('tabindex', '0');
       this.upButton.innerHTML = `
-        <svg viewBox="0 0 24 24">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
           <polyline points="18,15 12,9 6,15"></polyline>
         </svg>
       `;
@@ -334,8 +338,11 @@
 
       this.downButton = document.createElement('button');
       this.downButton.className = 'scroll-button down';
+      this.downButton.setAttribute('aria-label', 'Scroll down');
+      this.downButton.setAttribute('role', 'button');
+      this.downButton.setAttribute('tabindex', '0');
       this.downButton.innerHTML = `
-        <svg viewBox="0 0 24 24">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
           <polyline points="6,9 12,15 18,9"></polyline>
         </svg>
       `;
@@ -351,20 +358,33 @@
       this.upButton.addEventListener('mousedown', (e) => this.handleMouseDown(e, 'up'));
       this.upButton.addEventListener('mouseup', () => this.handleMouseUp('up'));
       this.upButton.addEventListener('mouseleave', () => this.handleMouseUp('up'));
+      this.upButton.addEventListener('keydown', (e) => this.handleKeyDown(e, 'up'));
 
       this.downButton.addEventListener('mousedown', (e) => this.handleMouseDown(e, 'down'));
       this.downButton.addEventListener('mouseup', () => this.handleMouseUp('down'));
       this.downButton.addEventListener('mouseleave', () => this.handleMouseUp('down'));
+      this.downButton.addEventListener('keydown', (e) => this.handleKeyDown(e, 'down'));
+    }
+
+    handleKeyDown(event, direction) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        this.executeSingleClick(direction);
+      }
     }
 
     showButton(button) {
       button.classList.add('visible');
+      if (this.settings.opacity) {
+        button.style.opacity = this.settings.opacity;
+      }
     }
 
     hideButton(button) {
       button.classList.remove('visible');
       button.classList.remove('pulse');
       button.classList.remove('active');
+      button.style.opacity = '';
     }
 
     handleMouseDown(event, direction) {
@@ -383,7 +403,7 @@
         if (this.clickState.isHolding && this.clickState.direction === direction) {
           this.startContinuousScroll(direction, button);
         }
-      }, CLICK_HOLD_THRESHOLD);
+      }, this.settings.holdThreshold);
     }
 
     handleMouseUp(direction) {
@@ -404,8 +424,8 @@
         return;
       }
 
-      if (timeSinceMousedown < CLICK_HOLD_THRESHOLD) {
-        if (timeSinceLastClick < DOUBLE_CLICK_THRESHOLD && this.clickState.direction === direction) {
+      if (timeSinceMousedown < this.settings.holdThreshold) {
+        if (timeSinceLastClick < this.settings.doubleClickWindow && this.clickState.direction === direction) {
           this.executeDoubleClick(direction);
           this.clickState.lastClickTime = 0;
         } else {
