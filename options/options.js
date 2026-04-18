@@ -50,11 +50,18 @@
   }
 
   function sanitizeUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    const trimmed = url.trim().toLowerCase();
+    if (!trimmed) return '';
+    
     try {
-      const urlObj = new URL(url.startsWith('http') ? url : 'https://' + url);
-      return urlObj.hostname.replace(/^www\./, '');
+      const urlToParse = trimmed.startsWith('http') ? trimmed : 'https://' + trimmed;
+      const urlObj = new URL(urlToParse);
+      const domain = urlObj.hostname.replace(/^www\./, '');
+      return domain || '';
     } catch {
-      return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+      const cleaned = trimmed.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+      return cleaned || '';
     }
   }
 
