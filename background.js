@@ -55,14 +55,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'CHECK_EXCLUSION') {
     const url = message.url;
-    chrome.storage.local.get(['settings'], (result) => {
+    chrome.storage.local.get(['settings', 'isEnabled'], (result) => {
       const settings = result.settings || DEFAULT_SETTINGS;
       const isExcluded = settings.excludedDomains.some(domain => url.includes(domain));
+      const isEnabled = result.isEnabled !== false;
       
       if (sender.tab?.id) {
         if (isExcluded) {
           chrome.action.setBadgeText({ text: 'OFF', tabId: sender.tab.id });
           chrome.action.setBadgeBackgroundColor({ color: '#ef4444', tabId: sender.tab.id });
+        } else if (!isEnabled) {
+          chrome.action.setBadgeText({ text: 'PAUSED', tabId: sender.tab.id });
+          chrome.action.setBadgeBackgroundColor({ color: '#f59e0b', tabId: sender.tab.id });
         } else {
           chrome.action.setBadgeText({ text: '', tabId: sender.tab.id });
         }
