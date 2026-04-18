@@ -32,6 +32,156 @@
       this.createTriggerZones();
       this.createButtons();
       this.attachEventListeners();
+      this.initOnboarding();
+      this.setupCleanup();
+    }
+
+    initOnboarding() {
+      const storageKey = 'virtualScrollOnboardingShown';
+      if (sessionStorage.getItem(storageKey)) return;
+      
+      sessionStorage.setItem(storageKey, 'true');
+      
+      setTimeout(() => {
+        this.showOnboarding();
+      }, 500);
+    }
+
+    showOnboarding() {
+      const tooltip = document.createElement('div');
+      tooltip.className = 'onboarding-tooltip';
+      tooltip.innerHTML = `
+        <div class="onboarding-step" data-step="1">
+          <div class="onboarding-content">
+            <div class="onboarding-number">1</div>
+            <div class="onboarding-text">Hover the right edge to reveal scroll buttons</div>
+          </div>
+          <button class="onboarding-next" data-next="2">Next</button>
+        </div>
+        <div class="onboarding-step" data-step="2">
+          <div class="onboarding-content">
+            <div class="onboarding-number">2</div>
+            <div class="onboarding-text">Click once to scroll, double-click to jump top/bottom</div>
+          </div>
+          <button class="onboarding-next" data-next="3">Next</button>
+        </div>
+        <div class="onboarding-step" data-step="3">
+          <div class="onboarding-content">
+            <div class="onboarding-number">3</div>
+            <div class="onboarding-text">Hold to continuous scroll with acceleration</div>
+          </div>
+          <button class="onboarding-close">Got it!</button>
+        </div>
+      `;
+      
+      const style = document.createElement('style');
+      style.textContent = `
+        .onboarding-tooltip {
+          position: fixed;
+          bottom: 80px;
+          right: 20px;
+          z-index: 2147483647;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .onboarding-step {
+          display: none;
+          background: rgba(30, 30, 30, 0.95);
+          color: #fff;
+          padding: 16px 20px;
+          border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+          max-width: 280px;
+          animation: fadeIn 200ms ease-out;
+        }
+        .onboarding-step.active {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .onboarding-content {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+        }
+        .onboarding-number {
+          width: 24px;
+          height: 24px;
+          background: #3B82F6;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 600;
+          flex-shrink: 0;
+        }
+        .onboarding-text {
+          font-size: 14px;
+          line-height: 1.5;
+        }
+        .onboarding-next, .onboarding-close {
+          align-self: flex-end;
+          background: #3B82F6;
+          color: #fff;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          font-size: 13px;
+          cursor: pointer;
+          transition: background 150ms ease;
+        }
+        .onboarding-next:hover, .onboarding-close:hover {
+          background: #2563eb;
+        }
+      `;
+      this.shadowRoot.appendChild(style);
+      this.shadowRoot.appendChild(tooltip);
+      
+      this.showStep(1);
+      
+      this.shadowRoot.querySelectorAll('.onboarding-next').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.showStep(parseInt(btn.dataset.next));
+        });
+      });
+      
+      this.shadowRoot.querySelector('.onboarding-close').addEventListener('click', () => {
+        tooltip.remove();
+      });
+    }
+
+    showStep(step) {
+      this.shadowRoot.querySelectorAll('.onboarding-step').forEach(el => {
+        el.classList.remove('active');
+      });
+      const current = this.shadowRoot.querySelector(`.onboarding-step[data-step="${step}"]`);
+      if (current) current.classList.add('active');
+    }
+
+    setupCleanup() {
+      window.addEventListener('unload', () => this.cleanup());
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) this.cleanup();
+      });
+    }
+
+    cleanup() {
+      if (this.scrollInterval) {
+        clearInterval(this.scrollInterval);
+      }
+      if (this.clickState.holdTimeout) {
+        clearTimeout(this.clickState.holdTimeout);
+      }
+      if (this.debounceTimer) {
+        clearTimeout(this.debounceTimer);
+      }
+      if (this.container && this.container.parentNode) {
+        this.container.parentNode.removeChild(this.container);
+      }
     }
 
     async loadSettings() {

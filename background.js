@@ -41,6 +41,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.local.get(['settings'], (result) => {
       const settings = result.settings || DEFAULT_SETTINGS;
       const isExcluded = settings.excludedDomains.some(domain => url.includes(domain));
+      
+      if (sender.tab?.id) {
+        if (isExcluded) {
+          chrome.action.setBadgeText({ text: 'OFF', tabId: sender.tab.id });
+          chrome.action.setBadgeBackgroundColor({ color: '#ef4444', tabId: sender.tab.id });
+        } else {
+          chrome.action.setBadgeText({ text: '', tabId: sender.tab.id });
+        }
+      }
+      
       sendResponse({ isExcluded });
     });
     return true;
