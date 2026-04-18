@@ -21,6 +21,23 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+chrome.commands.onCommand.addListener((command) => {
+  if (command === 'toggle-scroll') {
+    chrome.storage.local.get(['isEnabled'], (result) => {
+      const newState = !result.isEnabled;
+      chrome.storage.local.set({ isEnabled: newState }, () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]) {
+            chrome.tabs.reload(tabs[0].id);
+          }
+        });
+        chrome.action.setBadgeText({ text: newState ? '' : 'PAUSED' });
+        chrome.action.setBadgeBackgroundColor({ color: newState ? '#3B82F6' : '#f59e0b' });
+      });
+    });
+  }
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_SETTINGS') {
     chrome.storage.local.get(['settings'], (result) => {

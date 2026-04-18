@@ -25,13 +25,23 @@
 
     async init() {
       await this.loadSettings();
+      if (!(await this.isEnabled())) return;
       if (await this.isExcluded()) return;
       this.createShadowDOM();
       this.createTriggerZones();
       this.createButtons();
+      this.createHorizontalButtons();
       this.attachEventListeners();
       this.initOnboarding();
       this.setupCleanup();
+    }
+
+    async isEnabled() {
+      return new Promise((resolve) => {
+        chrome.storage.local.get(['isEnabled'], (result) => {
+          resolve(result.isEnabled !== false);
+        });
+      });
     }
 
     initOnboarding() {
@@ -239,6 +249,34 @@
           bottom: 0;
           right: 0;
         }
+        .trigger-zone.left {
+          top: 50%;
+          left: 0;
+          transform: translateY(-50%);
+          width: 60px;
+          height: 100px;
+        }
+        .trigger-zone.right {
+          top: 50%;
+          right: 0;
+          transform: translateY(-50%);
+          width: 60px;
+          height: 100px;
+        }
+        .scroll-button.left {
+          top: 50%;
+          left: 16px;
+          transform: translateY(-50%);
+        }
+        .scroll-button.right {
+          top: 50%;
+          right: 16px;
+          transform: translateY(-50%);
+        }
+        .scroll-button.horizontal {
+          width: 36px;
+          height: 36px;
+        }
         .scroll-button {
           position: fixed;
           width: 48px;
@@ -284,6 +322,16 @@
         .scroll-button.down {
           bottom: 20px;
           right: 16px;
+        }
+        .scroll-button.left {
+          left: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+        }
+        .scroll-button.right {
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
         }
         .scroll-button svg {
           width: 24px;
@@ -349,6 +397,40 @@
       this.shadowRoot.appendChild(this.downButton);
     }
 
+    createHorizontalButtons() {
+      this.leftButton = document.createElement('button');
+      this.leftButton.className = 'scroll-button left';
+      this.leftButton.setAttribute('aria-label', 'Scroll left');
+      this.leftButton.setAttribute('role', 'button');
+      this.leftButton.setAttribute('tabindex', '0');
+      this.leftButton.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <polyline points="15,18 9,12 15,6"></polyline>
+        </svg>
+      `;
+      this.shadowRoot.appendChild(this.leftButton);
+
+      this.rightButton = document.createElement('button');
+      this.rightButton.className = 'scroll-button right';
+      this.rightButton.setAttribute('aria-label', 'Scroll right');
+      this.rightButton.setAttribute('role', 'button');
+      this.rightButton.setAttribute('tabindex', '0');
+      this.rightButton.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <polyline points="9,6 15,12 9,18"></polyline>
+        </svg>
+      `;
+      this.shadowRoot.appendChild(this.rightButton);
+
+      this.leftZone = document.createElement('div');
+      this.leftZone.className = 'trigger-zone left';
+      this.shadowRoot.appendChild(this.leftZone);
+
+      this.rightZone = document.createElement('div');
+      this.rightZone.className = 'trigger-zone right';
+      this.shadowRoot.appendChild(this.rightZone);
+    }
+
     attachEventListeners() {
       this.topZone.addEventListener('mouseenter', () => this.showButton(this.upButton));
       this.topZone.addEventListener('mouseleave', () => this.hideButton(this.upButton));
@@ -364,6 +446,21 @@
       this.downButton.addEventListener('mouseup', () => this.handleMouseUp('down'));
       this.downButton.addEventListener('mouseleave', () => this.handleMouseUp('down'));
       this.downButton.addEventListener('keydown', (e) => this.handleKeyDown(e, 'down'));
+
+      this.leftZone.addEventListener('mouseenter', () => this.showButton(this.leftButton));
+      this.leftZone.addEventListener('mouseleave', () => this.hideButton(this.leftButton));
+      this.rightZone.addEventListener('mouseenter', () => this.showButton(this.rightButton));
+      this.rightZone.addEventListener('mouseleave', () => this.hideButton(this.rightButton));
+
+      this.leftButton.addEventListener('mousedown', (e) => this.handleMouseDown(e, 'left'));
+      this.leftButton.addEventListener('mouseup', () => this.handleMouseUp('left'));
+      this.leftButton.addEventListener('mouseleave', () => this.handleMouseUp('left'));
+      this.leftButton.addEventListener('keydown', (e) => this.handleKeyDown(e, 'left'));
+
+      this.rightButton.addEventListener('mousedown', (e) => this.handleMouseDown(e, 'right'));
+      this.rightButton.addEventListener('mouseup', () => this.handleMouseUp('right'));
+      this.rightButton.addEventListener('mouseleave', () => this.handleMouseUp('right'));
+      this.rightButton.addEventListener('keydown', (e) => this.handleKeyDown(e, 'right'));
     }
 
     handleKeyDown(event, direction) {
@@ -477,11 +574,18 @@
       this.clickState.direction = null;
       this.upButton?.classList.remove('pulse', 'active');
       this.downButton?.classList.remove('pulse', 'active');
+      this.leftButton?.classList.remove('pulse', 'active');
+      this.rightButton?.classList.remove('pulse', 'active');
     }
 
     scrollByDirection(direction, amount) {
-      const scrollAmount = direction === 'up' ? -amount : amount;
-      window.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+      if (direction === 'up' || direction === 'down') {
+        const scrollAmount = direction === 'up' ? -amount : amount;
+        window.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+      } else if (direction === 'left' || direction === 'right') {
+        const scrollAmount = direction === 'left' ? -amount : amount;
+        window.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
     }
   }
 

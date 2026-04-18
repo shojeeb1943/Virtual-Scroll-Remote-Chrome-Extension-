@@ -185,6 +185,24 @@
       border-radius: 6px;
       cursor: pointer;
     }
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .shortcut-label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .shortcut-keys {
+      background: #f0f0f0;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+    }
     @media (prefers-color-scheme: dark) {
       body {
         background: #1a1a1a;
@@ -215,6 +233,10 @@
         background: linear-gradient(135deg, #333 0%, #262626 100%);
         border-color: #404040;
       }
+      .shortcut-keys {
+        background: #404040;
+        color: #e5e5e5;
+      }
     }
   </style>
 </head>
@@ -225,6 +247,7 @@
       <div class="nav-item active" data-section="general">General</div>
       <div class="nav-item" data-section="scroll">Scroll</div>
       <div class="nav-item" data-section="zones">Trigger Zones</div>
+      <div class="nav-item" data-section="shortcuts">Shortcuts</div>
       <div class="nav-item" data-section="exclusions">Exclusion List</div>
     </div>
     <div class="main">
@@ -277,6 +300,16 @@
           <div class="zone-controls">
             <button class="zone-reset" id="resetZones">Reset to Default</button>
           </div>
+        </div>
+      </div>
+      <div class="section" id="shortcuts">
+        <h2>Keyboard Shortcuts</h2>
+        <div class="card">
+          <div class="shortcut-item">
+            <span class="shortcut-label">Toggle Extension On/Off</span>
+            <span class="shortcut-keys">Ctrl+Shift+S</span>
+          </div>
+          <p style="color: #666; font-size: 13px; margin-top: 12px;">You can change this shortcut in Chrome's extension settings.</p>
         </div>
       </div>
       <div class="section" id="exclusions">

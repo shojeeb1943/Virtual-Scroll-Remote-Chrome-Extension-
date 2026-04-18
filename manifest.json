@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "description": "A digital alternative to a physical mouse scroll wheel with customizable trigger zones",
   "permissions": [
-    "storage"
+    "storage",
+    "commands"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -24,6 +25,15 @@
     "default_popup": "popup/popup.html"
   },
   "options_page": "options/options.html",
+  "commands": {
+    "toggle-scroll": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Toggle Virtual Scroll Remote on/off"
+    }
+  },
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
