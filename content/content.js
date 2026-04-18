@@ -10,7 +10,10 @@
       this.container = null;
       this.upButton = null;
       this.downButton = null;
+      this.leftButton = null;
+      this.rightButton = null;
       this.scrollInterval = null;
+      this.isContinuousScroll = false;
       this.clickState = {
         direction: null,
         mousedownTime: 0,
@@ -523,7 +526,7 @@
     }
 
     executeSingleClick(direction) {
-      this.scrollByDirection(direction, this.settings.scrollStep);
+      this.scrollByDirection(direction, this.settings.scrollStep, true);
     }
 
     executeDoubleClick(direction) {
@@ -536,6 +539,7 @@
 
     startContinuousScroll(direction, button) {
       this.clickState.isScrolling = true;
+      this.isContinuousScroll = true;
       button.classList.add('pulse');
       button.classList.add('active');
 
@@ -548,7 +552,7 @@
         currentSpeed = this.settings.accelerationBase + 
           (this.settings.accelerationMax - this.settings.accelerationBase) * progress;
 
-        this.scrollByDirection(direction, this.settings.scrollStep * currentSpeed);
+        this.scrollByDirection(direction, this.settings.scrollStep * currentSpeed, false);
       }, 50);
     }
 
@@ -558,6 +562,7 @@
         this.scrollInterval = null;
       }
       this.clickState.isScrolling = false;
+      this.isContinuousScroll = false;
       this.clickState.direction = null;
       this.upButton?.classList.remove('pulse', 'active');
       this.downButton?.classList.remove('pulse', 'active');
@@ -565,13 +570,15 @@
       this.rightButton?.classList.remove('pulse', 'active');
     }
 
-    scrollByDirection(direction, amount) {
+    scrollByDirection(direction, amount, useSmooth = true) {
+      const behavior = (this.isContinuousScroll || !useSmooth) ? 'auto' : 'smooth';
+      
       if (direction === 'up' || direction === 'down') {
         const scrollAmount = direction === 'up' ? -amount : amount;
-        window.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+        window.scrollBy({ top: scrollAmount, behavior });
       } else if (direction === 'left' || direction === 'right') {
         const scrollAmount = direction === 'left' ? -amount : amount;
-        window.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        window.scrollBy({ left: scrollAmount, behavior });
       }
     }
   }
