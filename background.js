@@ -75,11 +75,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return currentHostname === normalizedDomain || 
                currentHostname.endsWith('.' + normalizedDomain);
       });
-        return currentHostname === normalizedDomain || 
-               currentHostname.endsWith('.' + normalizedDomain);
-      });
-      
-      const isEnabled = result.isEnabled !== false;
       
       if (sender.tab?.id) {
         if (isExcluded) {

@@ -36,15 +36,30 @@
   function renderExclusionList() {
     const list = document.getElementById('exclusionList');
     const domains = settings.excludedDomains || [];
-    list.innerHTML = domains.length === 0 ? '<p style="color: #999; padding: 8px;">No exclusions</p>' : '';
+    list.innerHTML = '';
+    
+    if (domains.length === 0) {
+      const emptyMsg = document.createElement('p');
+      emptyMsg.style.color = '#999';
+      emptyMsg.style.padding = '8px';
+      emptyMsg.textContent = 'No exclusions';
+      list.appendChild(emptyMsg);
+      return;
+    }
 
     domains.forEach((domain, index) => {
       const item = document.createElement('div');
       item.className = 'exclusion-item';
-      item.innerHTML = `
-        <span>${domain}</span>
-        <button data-index="${index}">Remove</button>
-      `;
+      
+      const span = document.createElement('span');
+      span.textContent = domain;
+      item.appendChild(span);
+      
+      const btn = document.createElement('button');
+      btn.dataset.index = index;
+      btn.textContent = 'Remove';
+      item.appendChild(btn);
+      
       list.appendChild(item);
     });
   }

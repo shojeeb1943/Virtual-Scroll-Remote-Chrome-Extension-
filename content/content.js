@@ -15,6 +15,7 @@
       this.scrollInterval = null;
       this.isContinuousScroll = false;
       this.isCleanedUp = false;
+      this.eventListeners = [];
       this.clickState = {
         direction: null,
         mousedownTime: 0,
@@ -67,13 +68,17 @@
 
     initOnboarding() {
       const storageKey = 'virtualScrollOnboardingShown';
-      if (sessionStorage.getItem(storageKey)) return;
-      
-      sessionStorage.setItem(storageKey, 'true');
-      
-      setTimeout(() => {
-        this.showOnboarding();
-      }, 500);
+      chrome.storage.local.get([storageKey], (result) => {
+        if (result[storageKey]) return;
+        
+        chrome.storage.local.set({ [storageKey]: true });
+        
+        setTimeout(() => {
+          if (!this.isCleanedUp) {
+            this.showOnboarding();
+          }
+        }, 500);
+      });
     }
 
     showOnboarding() {
@@ -212,6 +217,10 @@
         clearTimeout(this.debounceTimer);
         this.debounceTimer = null;
       }
+      this.eventListeners.forEach(({ element, event, handler }) => {
+        element.removeEventListener(event, handler);
+      });
+      this.eventListeners = [];
       if (this.container && this.container.parentNode) {
         this.container.parentNode.removeChild(this.container);
         this.container = null;
@@ -469,36 +478,41 @@
       this.shadowRoot.appendChild(this.rightZone);
     }
 
+    addEventListener(element, event, handler) {
+      element.addEventListener(event, handler);
+      this.eventListeners.push({ element, event, handler });
+    }
+
     attachEventListeners() {
-      this.topZone.addEventListener('mouseenter', () => this.showButton(this.upButton));
-      this.topZone.addEventListener('mouseleave', () => this.hideButton(this.upButton));
-      this.bottomZone.addEventListener('mouseenter', () => this.showButton(this.downButton));
-      this.bottomZone.addEventListener('mouseleave', () => this.hideButton(this.downButton));
+      this.addEventListener(this.topZone, 'mouseenter', () => this.showButton(this.upButton));
+      this.addEventListener(this.topZone, 'mouseleave', () => this.hideButton(this.upButton));
+      this.addEventListener(this.bottomZone, 'mouseenter', () => this.showButton(this.downButton));
+      this.addEventListener(this.bottomZone, 'mouseleave', () => this.hideButton(this.downButton));
 
-      this.upButton.addEventListener('mousedown', (e) => this.handleMouseDown(e, 'up'));
-      this.upButton.addEventListener('mouseup', () => this.handleMouseUp('up'));
-      this.upButton.addEventListener('mouseleave', () => this.handleMouseUp('up'));
-      this.upButton.addEventListener('keydown', (e) => this.handleKeyDown(e, 'up'));
+      this.addEventListener(this.upButton, 'mousedown', (e) => this.handleMouseDown(e, 'up'));
+      this.addEventListener(this.upButton, 'mouseup', () => this.handleMouseUp('up'));
+      this.addEventListener(this.upButton, 'mouseleave', () => this.handleMouseUp('up'));
+      this.addEventListener(this.upButton, 'keydown', (e) => this.handleKeyDown(e, 'up'));
 
-      this.downButton.addEventListener('mousedown', (e) => this.handleMouseDown(e, 'down'));
-      this.downButton.addEventListener('mouseup', () => this.handleMouseUp('down'));
-      this.downButton.addEventListener('mouseleave', () => this.handleMouseUp('down'));
-      this.downButton.addEventListener('keydown', (e) => this.handleKeyDown(e, 'down'));
+      this.addEventListener(this.downButton, 'mousedown', (e) => this.handleMouseDown(e, 'down'));
+      this.addEventListener(this.downButton, 'mouseup', () => this.handleMouseUp('down'));
+      this.addEventListener(this.downButton, 'mouseleave', () => this.handleMouseUp('down'));
+      this.addEventListener(this.downButton, 'keydown', (e) => this.handleKeyDown(e, 'down'));
 
-      this.leftZone.addEventListener('mouseenter', () => this.showButton(this.leftButton));
-      this.leftZone.addEventListener('mouseleave', () => this.hideButton(this.leftButton));
-      this.rightZone.addEventListener('mouseenter', () => this.showButton(this.rightButton));
-      this.rightZone.addEventListener('mouseleave', () => this.hideButton(this.rightButton));
+      this.addEventListener(this.leftZone, 'mouseenter', () => this.showButton(this.leftButton));
+      this.addEventListener(this.leftZone, 'mouseleave', () => this.hideButton(this.leftButton));
+      this.addEventListener(this.rightZone, 'mouseenter', () => this.showButton(this.rightButton));
+      this.addEventListener(this.rightZone, 'mouseleave', () => this.hideButton(this.rightButton));
 
-      this.leftButton.addEventListener('mousedown', (e) => this.handleMouseDown(e, 'left'));
-      this.leftButton.addEventListener('mouseup', () => this.handleMouseUp('left'));
-      this.leftButton.addEventListener('mouseleave', () => this.handleMouseUp('left'));
-      this.leftButton.addEventListener('keydown', (e) => this.handleKeyDown(e, 'left'));
+      this.addEventListener(this.leftButton, 'mousedown', (e) => this.handleMouseDown(e, 'left'));
+      this.addEventListener(this.leftButton, 'mouseup', () => this.handleMouseUp('left'));
+      this.addEventListener(this.leftButton, 'mouseleave', () => this.handleMouseUp('left'));
+      this.addEventListener(this.leftButton, 'keydown', (e) => this.handleKeyDown(e, 'left'));
 
-      this.rightButton.addEventListener('mousedown', (e) => this.handleMouseDown(e, 'right'));
-      this.rightButton.addEventListener('mouseup', () => this.handleMouseUp('right'));
-      this.rightButton.addEventListener('mouseleave', () => this.handleMouseUp('right'));
-      this.rightButton.addEventListener('keydown', (e) => this.handleKeyDown(e, 'right'));
+      this.addEventListener(this.rightButton, 'mousedown', (e) => this.handleMouseDown(e, 'right'));
+      this.addEventListener(this.rightButton, 'mouseup', () => this.handleMouseUp('right'));
+      this.addEventListener(this.rightButton, 'mouseleave', () => this.handleMouseUp('right'));
+      this.addEventListener(this.rightButton, 'keydown', (e) => this.handleKeyDown(e, 'right'));
     }
 
     handleKeyDown(event, direction) {
