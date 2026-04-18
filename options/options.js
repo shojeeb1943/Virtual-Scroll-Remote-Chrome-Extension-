@@ -110,15 +110,15 @@
       const rect = viewport.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return;
       
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+      const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
 
       activeMarker.style.left = x + '%';
       activeMarker.style.top = y + '%';
 
       const zone = activeMarker.id === 'topRightMarker' ? 'topRight' : 'bottomRight';
       if (!settings.triggerZones) settings.triggerZones = {};
-      settings.triggerZones[zone] = { x, y };
+      settings.triggerZones[zone] = { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 };
 
       saveSettings();
     });
