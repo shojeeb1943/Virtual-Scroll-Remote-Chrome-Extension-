@@ -104,7 +104,12 @@
       e.preventDefault();
       if (!activeMarker) return;
 
-      const rect = e.currentTarget.querySelector('.preview-viewport').getBoundingClientRect();
+      const viewport = e.currentTarget.querySelector('.preview-viewport');
+      if (!viewport) return;
+      
+      const rect = viewport.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      
       const x = ((e.clientX - rect.left) / rect.width) * 100;
       const y = ((e.clientY - rect.top) / rect.height) * 100;
 
