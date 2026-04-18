@@ -196,9 +196,9 @@
     }
 
     async loadSettings() {
-      return new Promise((resolve) => {
-        chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (settings) => {
-          this.settings = settings || {
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          resolve({
             scrollStep: 500,
             accelerationBase: 1,
             accelerationMax: 5,
@@ -207,17 +207,55 @@
             doubleClickWindow: 400,
             opacity: 0.8,
             excludedDomains: []
-          };
-          resolve();
+          });
+        }, 2000);
+
+        chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (settings) => {
+          clearTimeout(timeout);
+          if (chrome.runtime.lastError) {
+            console.warn('Failed to get settings:', chrome.runtime.lastError.message);
+            resolve({
+              scrollStep: 500,
+              accelerationBase: 1,
+              accelerationMax: 5,
+              accelerationDuration: 3000,
+              holdThreshold: 300,
+              doubleClickWindow: 400,
+              opacity: 0.8,
+              excludedDomains: []
+            });
+          } else {
+            this.settings = settings || {
+              scrollStep: 500,
+              accelerationBase: 1,
+              accelerationMax: 5,
+              accelerationDuration: 3000,
+              holdThreshold: 300,
+              doubleClickWindow: 400,
+              opacity: 0.8,
+              excludedDomains: []
+            };
+            resolve();
+          }
         });
       });
     }
 
     async isExcluded() {
       return new Promise((resolve) => {
+        const timeout = setTimeout(() => resolve(false), 2000);
+
         chrome.runtime.sendMessage(
           { type: 'CHECK_EXCLUSION', url: window.location.href },
-          (response) => resolve(response.isExcluded)
+          (response) => {
+            clearTimeout(timeout);
+            if (chrome.runtime.lastError) {
+              console.warn('Failed to check exclusion:', chrome.runtime.lastError.message);
+              resolve(false);
+            } else {
+              resolve(response?.isExcluded || false);
+            }
+          }
         );
       });
     }
